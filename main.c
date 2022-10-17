@@ -56,7 +56,7 @@
 #define TFT_TASK_PRIORITY          (configMAX_PRIORITIES - 3)
 #define LED_TASK_STACK_SIZE        (configMINIMAL_STACK_SIZE)
 #define LED_TASK_PRIORITY          (configMAX_PRIORITIES - 2)
-#define UART_TASK_STACK_SIZE       (configMINIMAL_STACK_SIZE)
+#define UART_TASK_STACK_SIZE       (configMINIMAL_STACK_SIZE * 2)
 #define UART_TASK_PRIORITY         (configMAX_PRIORITIES - 2)
 #define CLOCK_100_MHZ              (100000000u)
 

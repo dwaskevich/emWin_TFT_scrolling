@@ -46,14 +46,14 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "uart_receive_task.h"
-#include "semphr.h"
+#include "queue.h"
 
-/* Semaphore handle for UART event */
-static SemaphoreHandle_t uartSemaphore;
-char c;
+/* Queue handle for UART event */
+static QueueHandle_t uartQueue;
 
 void uart_event_callback(void *callback_arg, cyhal_uart_event_t event)
 {
+	char c;
 	size_t size = 1;
 	BaseType_t xHigherPriorityTaskWoken;
 	xHigherPriorityTaskWoken = pdFALSE;
@@ -63,11 +63,8 @@ void uart_event_callback(void *callback_arg, cyhal_uart_event_t event)
 		{
     		cyhal_uart_read(&cy_retarget_io_uart_obj, (void *)&c, &size);
 		}
-    	/* echo character */
-    	cyhal_uart_write(&cy_retarget_io_uart_obj, (void *)&c, &size);
 
-		/* Data is received in the RX FIFO */
-		xSemaphoreGiveFromISR(uartSemaphore, &xHigherPriorityTaskWoken);
+    	xQueueSendFromISR(uartQueue, &c, &xHigherPriorityTaskWoken);
 		if(xHigherPriorityTaskWoken == pdTRUE)
 		{
 			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
@@ -77,7 +74,10 @@ void uart_event_callback(void *callback_arg, cyhal_uart_event_t event)
 
 void task_uart_receive(void *param)
 {
-	uartSemaphore = xSemaphoreCreateBinary();
+	uartQueue = xQueueCreate(1, sizeof(char));
+	char rxChar;
+	char stringBuffer[40];
+	BaseType_t charCount = 0;
 
 	cyhal_gpio_init(P11_1, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, CYBSP_LED_STATE_OFF);
 
@@ -87,7 +87,26 @@ void task_uart_receive(void *param)
 
 	for(;;)
 	{
-	    xSemaphoreTake(uartSemaphore, portMAX_DELAY);
-	    cyhal_gpio_toggle_internal(P11_1);
+	    if(xQueueReceive(uartQueue, &rxChar, portMAX_DELAY) == pdTRUE)
+	    {
+	    	/* echo character */
+	    	cyhal_uart_putc(&cy_retarget_io_uart_obj, rxChar);
+	    	cyhal_gpio_toggle_internal(P11_1);
+
+	    	/* build input string buffer */
+	    	if('\r' == rxChar || '\n' == rxChar)
+	    	{
+	    		printf("line termination - %x", rxChar);
+	    		stringBuffer[charCount] = '\0';
+	    		printf("\r\nString length = %d\tString complete - %s\r\n", (int) charCount, stringBuffer);
+	    		charCount = 0;
+	    	}
+	    	else
+	    	{
+	    		stringBuffer[charCount] = rxChar;
+	    		if(charCount < sizeof(stringBuffer) - 1)
+	    			charCount++;
+	    	}
+	    }
 	}
 }
