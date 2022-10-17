@@ -44,6 +44,7 @@
 #include "cybsp.h"
 #include "bitmaps.h"
 #include "tft_task.h"
+#include "led_task.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -52,6 +53,8 @@
 *******************************************************************************/
 #define TFT_TASK_STACK_SIZE        (1024*10)
 #define TFT_TASK_PRIORITY          (configMAX_PRIORITIES - 3)
+#define LED_TASK_STACK_SIZE        (configMINIMAL_STACK_SIZE)
+#define LED_TASK_PRIORITY          (configMAX_PRIORITIES - 2)
 #define CLOCK_100_MHZ              (100000000u)
 
 /*******************************************************************************
@@ -99,8 +102,12 @@ int main(void)
     printf("\x1b[2J\x1b[;H");
 
     printf("**********************************************************\r\n");
-    printf("PSoC 6 MCU EmWin TFT\r\n");
+    printf("PSoC 6 MCU EmWin TFT ... djjw - older release (v1.0)\r\n");
     printf("**********************************************************\r\n");
+
+    /* Create the LED task */
+    xTaskCreate(led_task, "ledTask", LED_TASK_STACK_SIZE,
+                    NULL,  LED_TASK_PRIORITY,  NULL);
 
     /* Create the TFT task */
     xTaskCreate(tft_task, "tftTask", TFT_TASK_STACK_SIZE,

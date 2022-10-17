@@ -161,6 +161,9 @@ void tft_task(void *arg)
     /* Initialize the User Button */
     cyhal_gpio_init(CYBSP_USER_BTN, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_PULLUP, CYBSP_BTN_OFF);
 
+    /* Initialize the User LED (LED8 ... orange) */
+	cyhal_gpio_init(CYBSP_USER_LED, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, CYBSP_LED_STATE_OFF);
+
     /* Initialize the display controller */
     result = mtb_st7789v_init8(&tft_pins);
     CY_ASSERT(result == CY_RSLT_SUCCESS);
