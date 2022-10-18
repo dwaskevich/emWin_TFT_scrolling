@@ -143,29 +143,29 @@ void (*demo_page_array[NUMBER_OF_DEMO_PAGES])(void) = {
 void tft_task(void *arg)
 {
     cy_rslt_t result;
-    uint8_t page_number = 0;
+//    uint8_t page_number = 0;
     char rxStringBuffer[40];
     extern QueueHandle_t stringQueue;
 
-    /* Array of demo pages functions */
-    void (*demo_page_array[NUMBER_OF_DEMO_PAGES])(void) = {
-        show_text_modes,
-        show_text_colors,
-        show_font_sizes_normal,
-        show_font_sizes_bold,
-        show_color_bar,
-        show_2d_graphics1,
-        show_2d_graphics2,
-        show_concentric_circles,
-        show_bitmap
-    };
-    uint8_t num_of_demo_pages = (sizeof(demo_page_array)/sizeof(demo_page_array[0]));
+//    /* Array of demo pages functions */
+//    void (*demo_page_array[NUMBER_OF_DEMO_PAGES])(void) = {
+//        show_text_modes,
+//        show_text_colors,
+//        show_font_sizes_normal,
+//        show_font_sizes_bold,
+//        show_color_bar,
+//        show_2d_graphics1,
+//        show_2d_graphics2,
+//        show_concentric_circles,
+//        show_bitmap
+//    };
+//    uint8_t num_of_demo_pages = (sizeof(demo_page_array)/sizeof(demo_page_array[0]));
 
-    /* Initialize the User Button */
-    cyhal_gpio_init(CYBSP_USER_BTN, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_PULLUP, CYBSP_BTN_OFF);
+//    /* Initialize the User Button */
+//    cyhal_gpio_init(CYBSP_USER_BTN, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_PULLUP, CYBSP_BTN_OFF);
 
-    /* Initialize the User LED (LED8 ... orange) */
-	cyhal_gpio_init(CYBSP_USER_LED, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, CYBSP_LED_STATE_OFF);
+//    /* Initialize the User LED (LED8 ... orange) */
+//	cyhal_gpio_init(CYBSP_USER_LED, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, CYBSP_LED_STATE_OFF);
 
     /* Initialize the display controller */
     result = mtb_st7789v_init8(&tft_pins);
@@ -181,12 +181,15 @@ void tft_task(void *arg)
     vTaskDelay(STARTUP_DELAY);
 
     /* Show the instructions screen */
-    show_instructions_screen();
+//    show_instructions_screen();
 //    wait_for_switch_press_and_release();
+
+    /* Clear the display */
+    GUI_Clear();
 
     for(;;)
     {
-        cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_ON);
+//        cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_ON);
 
         /* Using page_number as index, update the display with a demo screen
             Following are the functions that are called in sequence
@@ -197,19 +200,23 @@ void tft_task(void *arg)
                 show_2d_graphics_1()
                 show_2d_graphics_2()
         */
-        (*demo_page_array[page_number])();
+//        (*demo_page_array[page_number])();
         
-        cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_OFF);
+//        cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_OFF);
 
-        printf("\r\nreached here\r\n");
+//        printf("\r\nreached here\r\n");
         xQueueReceive(stringQueue, rxStringBuffer, portMAX_DELAY);
-        printf("Received string from UART - %s", rxStringBuffer);
+        GUI_DispStringAt(rxStringBuffer, 0, 0);
+//        printf("Received string from UART - %s", rxStringBuffer);
+//        cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_ON);
+
+//        GUI_DispStringAt(rxStringBuffer, 0, 0);
 
         /* Wait for a switch press event */
 //        wait_for_switch_press_and_release();
 
         /* Cycle through demo pages */
-        page_number = (page_number+1) % num_of_demo_pages;
+//        page_number = (page_number+1) % num_of_demo_pages;
     }
 }
 
