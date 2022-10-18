@@ -78,7 +78,7 @@ void uart_event_callback(void *callback_arg, cyhal_uart_event_t event)
 void task_uart_receive(void *param)
 {
 	char rxChar;
-	char stringBuffer[40];
+	char stringBuffer[LINE_LENGTH];
 	BaseType_t charCount = 0;
 
 	/* create UART queue */
