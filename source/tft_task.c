@@ -55,16 +55,17 @@
 #include "cy_pdl.h"
 #include "cyhal.h"
 #include "cybsp.h"
+#include "cy_retarget_io.h"
 #include "GUI.h"
 #include "mtb_st7789v.h"
 #include "bitmaps.h"
 #include "tft_task.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "queue.h"
 
 #define STARTUP_DELAY               (2000/*ms*/) /* Amount of time to show the startup logo */
 #define NUMBER_OF_DEMO_PAGES        (9u)
-
 
 /* The pins are defined by the st7789v library. If the display is being used on different hardware the mappings will be different. */
 const mtb_st7789v_pins_t tft_pins =
@@ -143,6 +144,8 @@ void tft_task(void *arg)
 {
     cy_rslt_t result;
     uint8_t page_number = 0;
+    char rxStringBuffer[40];
+    extern QueueHandle_t stringQueue;
 
     /* Array of demo pages functions */
     void (*demo_page_array[NUMBER_OF_DEMO_PAGES])(void) = {
@@ -179,7 +182,7 @@ void tft_task(void *arg)
 
     /* Show the instructions screen */
     show_instructions_screen();
-    wait_for_switch_press_and_release();
+//    wait_for_switch_press_and_release();
 
     for(;;)
     {
@@ -198,8 +201,12 @@ void tft_task(void *arg)
         
         cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_OFF);
 
+        printf("\r\nreached here\r\n");
+        xQueueReceive(stringQueue, rxStringBuffer, portMAX_DELAY);
+        printf("Received string from UART - %s", rxStringBuffer);
+
         /* Wait for a switch press event */
-        wait_for_switch_press_and_release();
+//        wait_for_switch_press_and_release();
 
         /* Cycle through demo pages */
         page_number = (page_number+1) % num_of_demo_pages;

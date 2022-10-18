@@ -51,6 +51,9 @@
 /* Queue handle for UART event */
 static QueueHandle_t uartQueue;
 
+/* Queue handle for string message */
+extern QueueHandle_t stringQueue;
+
 void uart_event_callback(void *callback_arg, cyhal_uart_event_t event)
 {
 	char c;
@@ -74,10 +77,15 @@ void uart_event_callback(void *callback_arg, cyhal_uart_event_t event)
 
 void task_uart_receive(void *param)
 {
-	uartQueue = xQueueCreate(1, sizeof(char));
 	char rxChar;
 	char stringBuffer[40];
 	BaseType_t charCount = 0;
+
+	/* create UART queue */
+	uartQueue = xQueueCreate(1, sizeof(char));
+
+	/* create string queue */
+	stringQueue = xQueueCreate(20, sizeof(stringBuffer));
 
 	cyhal_gpio_init(P11_1, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, CYBSP_LED_STATE_OFF);
 
@@ -96,9 +104,9 @@ void task_uart_receive(void *param)
 	    	/* build input string buffer */
 	    	if('\r' == rxChar || '\n' == rxChar)
 	    	{
-	    		printf("line termination - %x", rxChar);
 	    		stringBuffer[charCount] = '\0';
 	    		printf("\r\nString length = %d\tString complete - %s\r\n", (int) charCount, stringBuffer);
+	    		xQueueSend(stringQueue, stringBuffer, 100);
 	    		charCount = 0;
 	    	}
 	    	else

@@ -43,11 +43,12 @@
 #include "cyhal.h"
 #include "cybsp.h"
 #include "bitmaps.h"
+#include "FreeRTOS.h"
 #include "tft_task.h"
 #include "led_task.h"
 #include "uart_receive_task.h"
-#include "FreeRTOS.h"
 #include "task.h"
+#include "queue.h"
 
 /*******************************************************************************
 * Macros
@@ -65,6 +66,10 @@
 *******************************************************************************/
 /* This enables RTOS aware debugging. */
 volatile int uxTopUsedPriority;
+
+/* Queue handle for string message */
+QueueHandle_t stringQueue;
+
 
 /*******************************************************************************
 * Function Name: int main(void)
