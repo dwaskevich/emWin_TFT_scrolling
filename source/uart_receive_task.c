@@ -104,8 +104,9 @@ void task_uart_receive(void *param)
 	    	/* build input string buffer */
 	    	if('\r' == rxChar || '\n' == rxChar)
 	    	{
+	    		cyhal_uart_putc(&cy_retarget_io_uart_obj, '\n');
 	    		stringBuffer[charCount] = '\0';
-	    		printf("\r\nString length = %d\tString complete - %s\r\n", (int) charCount, stringBuffer);
+//	    		printf("\r\nString length = %d\tString complete - %s\r\n", (int) charCount, stringBuffer);
 	    		xQueueSend(stringQueue, stringBuffer, 100);
 	    		charCount = 0;
 	    	}

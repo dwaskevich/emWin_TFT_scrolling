@@ -55,12 +55,12 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "uart_receive_task.h"
 
 #define STARTUP_DELAY               (2000/*ms*/) /* Amount of time to show the startup logo */
 
 /* Parameters for Newhaven 2.4″ 240×320 TFT display with a Sitronix ST7789 display controller w/8080 Parallel Interface. */
 #define Y_STEP_SIZE					(15u)
-#define LINE_LENGTH					(40u)
 #define NUMBER_OF_LINES				(16u)
 
 /* The pins are defined by the st7789v library. If the display is being used on different hardware the mappings will be different. */
@@ -140,7 +140,7 @@ void tft_task(void *arg)
         strcpy(screenBuffer[headPointer], rxStringBuffer); /* copy string to head of screen buffer */
         for(uint8_t i = 0; i < NUMBER_OF_LINES; i++) /* fill the screen (scroll upward) */
         {
-        	printf("i = %d\tindex = %d\tline # = %d\ts = %s\r\n", i, (int) indexScreenBuffer, (NUMBER_OF_LINES - i), screenBuffer[indexScreenBuffer]);
+//        	printf("i = %d\tindex = %d\tline # = %d\ts = %s\r\n", i, (int) indexScreenBuffer, (NUMBER_OF_LINES - i), screenBuffer[indexScreenBuffer]);
         	GUI_DispStringAtCEOL(screenBuffer[indexScreenBuffer], 0, (NUMBER_OF_LINES - 1 - i) * Y_STEP_SIZE); /* write TFT */
         	if(indexScreenBuffer == 0) /* adjust the index */
         		indexScreenBuffer = NUMBER_OF_LINES - 1;
