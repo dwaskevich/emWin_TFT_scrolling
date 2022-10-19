@@ -104,13 +104,13 @@ void show_startup_screen(void);
 void tft_task(void *arg)
 {
     cy_rslt_t result;
-    char rxStringBuffer[40];
+    char rxStringBuffer[LINE_LENGTH];
     extern QueueHandle_t stringQueue;
     BaseType_t lineNumber = 0;
     char screenBuffer[NUMBER_OF_LINES][LINE_LENGTH];
     bool scrollFlag = false;
     BaseType_t screenBufferOffset = 0;
-    char *ptrLineBuffer;
+    char (*ptrLineBuffer)[LINE_LENGTH];
 
     /* Initialize the display controller */
     result = mtb_st7789v_init8(&tft_pins);
@@ -128,12 +128,13 @@ void tft_task(void *arg)
     /* Clear the display */
     GUI_Clear();
 
-    ptrLineBuffer = &screenBuffer[0][0] + screenBufferOffset;
+    ptrLineBuffer = screenBuffer;
 
     for(;;)
     {
         xQueueReceive(stringQueue, rxStringBuffer, portMAX_DELAY);
-        GUI_DispStringAtCEOL(rxStringBuffer, 0, lineNumber * Y_STEP_SIZE);
+        strcpy((char *) ptrLineBuffer, rxStringBuffer);
+        GUI_DispStringAtCEOL((char *) ptrLineBuffer++, 0, lineNumber * Y_STEP_SIZE);
         if(++lineNumber >= NUMBER_OF_LINES)
         {
         	scrollFlag = true;
@@ -141,7 +142,11 @@ void tft_task(void *arg)
         }
         if(true == scrollFlag)
         {
-        	lineNumber++;
+        	ptrLineBuffer = screenBuffer;
+        	for(uint8_t i = 0; i < NUMBER_OF_LINES; i++)
+        	{
+        		printf("%s\r\n", (char *) ptrLineBuffer++);
+        	}
         }
     }
 }
