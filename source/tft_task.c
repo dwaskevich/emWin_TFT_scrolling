@@ -57,6 +57,8 @@
 #include "queue.h"
 
 #define STARTUP_DELAY               (2000/*ms*/) /* Amount of time to show the startup logo */
+
+/* Parameters for Newhaven 2.4″ 240×320 TFT display with a Sitronix ST7789 display controller w/8080 Parallel Interface. */
 #define Y_STEP_SIZE					(15u)
 #define LINE_LENGTH					(40u)
 #define NUMBER_OF_LINES				(16u)
@@ -104,13 +106,16 @@ void show_startup_screen(void);
 void tft_task(void *arg)
 {
     cy_rslt_t result;
-    char rxStringBuffer[LINE_LENGTH];
-    extern QueueHandle_t stringQueue;
-    BaseType_t lineNumber = 0;
-    char screenBuffer[NUMBER_OF_LINES][LINE_LENGTH];
-    bool scrollFlag = false;
-    BaseType_t screenBufferOffset = 0;
-    char (*ptrLineBuffer)[LINE_LENGTH];
+    extern QueueHandle_t stringQueue; /* extern declaration to the string Queue */
+    char rxStringBuffer[LINE_LENGTH]; /* local buffer/storage for Queue message from UART task */
+    char screenBuffer[NUMBER_OF_LINES][LINE_LENGTH]; /* ring buffer storage for TFT screen */
+    BaseType_t headPointer = 0, indexScreenBuffer = 0; /* head pointer for circular screen buffer */
+
+    /* initialize screenBuffer with NULL strings */
+    for(uint8_t i = 0; i < NUMBER_OF_LINES; i++)
+    {
+    	strcpy(screenBuffer[i], "");
+    }
 
     /* Initialize the display controller */
     result = mtb_st7789v_init8(&tft_pins);
@@ -128,26 +133,25 @@ void tft_task(void *arg)
     /* Clear the display */
     GUI_Clear();
 
-    ptrLineBuffer = screenBuffer;
-
     for(;;)
     {
-        xQueueReceive(stringQueue, rxStringBuffer, portMAX_DELAY);
-        strcpy((char *) ptrLineBuffer, rxStringBuffer);
-        GUI_DispStringAtCEOL((char *) ptrLineBuffer++, 0, lineNumber * Y_STEP_SIZE);
-        if(++lineNumber >= NUMBER_OF_LINES)
+        xQueueReceive(stringQueue, rxStringBuffer, portMAX_DELAY); /* get UART string from queue */
+        indexScreenBuffer = headPointer; /* set index to the screen line buffer to the head pointer */
+        strcpy(screenBuffer[headPointer], rxStringBuffer); /* copy string to head of screen buffer */
+        for(uint8_t i = 0; i < NUMBER_OF_LINES; i++) /* fill the screen (scroll upward) */
         {
-        	scrollFlag = true;
-        	lineNumber = 0;
+        	printf("i = %d\tindex = %d\tline # = %d\ts = %s\r\n", i, (int) indexScreenBuffer, (NUMBER_OF_LINES - i), screenBuffer[indexScreenBuffer]);
+        	GUI_DispStringAtCEOL(screenBuffer[indexScreenBuffer], 0, (NUMBER_OF_LINES - 1 - i) * Y_STEP_SIZE); /* write TFT */
+        	if(indexScreenBuffer == 0) /* adjust the index */
+        		indexScreenBuffer = NUMBER_OF_LINES - 1;
+        	else
+        		indexScreenBuffer--;
         }
-        if(true == scrollFlag)
-        {
-        	ptrLineBuffer = screenBuffer;
-        	for(uint8_t i = 0; i < NUMBER_OF_LINES; i++)
-        	{
-        		printf("%s\r\n", (char *) ptrLineBuffer++);
-        	}
-        }
+        headPointer++; /* move the head pointer forward */
+		if(headPointer >= NUMBER_OF_LINES)
+		{
+			headPointer = 0;
+		}
     }
 }
 
